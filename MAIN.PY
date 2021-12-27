@@ -217,14 +217,24 @@ class GUI:
         frm.pack(padx=20, pady=15)
     
     def addConfirm(self, w):
-        # self.inputTool
-        f.addItem(w, self.treeAll, self.nameIn.get(), self.numIn.get()) 
+
+        if self.nameIn.get() == "" or self.numIn.get() == "":
+            messagebox.showinfo("提醒", "請填寫完整的資料")
+        else:
+            self.inputTool.insert('end', self.nameIn.get())
+            f.addItem(w, self.treeAll, self.nameIn.get(), self.numIn.get()) 
     
     def removeItem(self):
-        for i in self.treeAll.selection():
-            # print(self.treeAll.item(i, 'value')[0])
-            f.removeItem(self.treeAll.item(i, 'value')[0])
-            self.treeAll.delete(i)
+
+        ans = messagebox.askyesno("移除資材", "您確定要移除這項資材嗎？")
+        if ans == 1:
+            if self.treeAll.selection():
+                messagebox.showinfo('提醒', '請先選取項目')
+            else:
+                for i in self.treeAll.selection():
+                    # print(self.treeAll.item(i, 'value')[0])
+                    f.removeItem(self.treeAll.item(i, 'value')[0])
+                    self.treeAll.delete(i)
         return
     
     def editItem(self):
@@ -292,7 +302,7 @@ class GUI:
     def addToListbox(self, name, tool, amount):
         print(name, tool, amount)
         if name == "" or tool == "" or amount == "":
-            messagebox.showinfo("提醒", "請輸入完整的借用資料")
+            messagebox.showinfo("提醒", "請輸入正確、完整的借用資料")
         else:
             try:
                 int(amount)
@@ -305,8 +315,9 @@ class GUI:
                 
                 self.showListbox.insert("end",  f' {tool} x {amount}')
             except ValueError as e:
-                messagebox.showinfo("提醒", "請輸入完整的借用資料")
-
+                messagebox.showinfo("提醒", "請輸入正確、完整的借用資料")
+                self.inputAmount.delete(0, END)
+                
     def deleteListbox(self):
         ans=0
         if self.showListbox.curselection() != ():
@@ -318,34 +329,39 @@ class GUI:
                 self.lendData['tools'].pop(i)
 
     def lend(self):
-        ans = messagebox.askyesno("借用", "您確定要借出嗎？")
-        if ans == 1:
-            f.lendout(self.lendData)
-    
-            self.inputName.delete(0, END)
-            self.inputTool.delete(0, END)
-            self.inputAmount.delete(0, END)
-            self.showListbox.delete('0','end')
-            self.treeLend.insert('', 'end',
-                                 value=(self.lendData['date'], self.lendData['time'], self.lendData['name'],
-                                        self.lendData['tools'][0]['tool'], self.lendData['tools'][0]['amount']))
-            # self.treeAll
-            for i in self.lendData['tools'][1:]:
-                self.treeLend.insert('', 'end', value=('', '', '', i['tool'], i['amount']))
+        if self.showListbox.size() == 0:
+            messagebox.askyesno("提醒", "您沒有借用任何資材，是嗎？")
+        else:
+            ans = messagebox.askyesno("借用", "您確定要借出嗎？")
+            if ans == 1:
+                f.lendout(self.lendData)
+        
+                self.inputName.delete(0, END)
+                self.inputTool.delete(0, END)
+                self.inputAmount.delete(0, END)
+                self.showListbox.delete('0','end')
+                self.treeLend.insert('', 'end',
+                                     value=(self.lendData['date'], self.lendData['time'], self.lendData['name'],
+                                            self.lendData['tools'][0]['tool'], self.lendData['tools'][0]['amount']))
+                # self.treeAll
+                for i in self.lendData['tools'][1:]:
+                    self.treeLend.insert('', 'end', value=('', '', '', i['tool'], i['amount']))
     
     def back(self):
-        for i in self.treeLend.selection():
-            temp = i
-            print(self.treeLend.index(temp), self.treeLendCount)
-            while self.treeLend.index(temp) != self.treeLendCount and not self.treeLend.item(self.treeLend.next(temp), 'value')[0]:
-                self.treeLend.delete(self.treeLend.next(temp))
-            while not self.treeLend.item(temp, 'value')[0]:
-                t = self.treeLend.prev(temp)
+        ans = messagebox.askyesno("歸還", "您要歸還資材嗎？")
+        if ans == 1:
+            for i in self.treeLend.selection():
+                temp = i
+                print(self.treeLend.index(temp), self.treeLendCount)
+                while self.treeLend.index(temp) != self.treeLendCount and not self.treeLend.item(self.treeLend.next(temp), 'value')[0]:
+                    self.treeLend.delete(self.treeLend.next(temp))
+                while not self.treeLend.item(temp, 'value')[0]:
+                    t = self.treeLend.prev(temp)
+                    self.treeLend.delete(temp)
+                    temp = t
+                li = self.treeLend.item(temp, 'value')
+                f.giveBack(li[0], li[1]) #回傳時間
                 self.treeLend.delete(temp)
-                temp = t
-            li = self.treeLend.item(temp, 'value')
-            f.giveBack(li[0], li[1]) #回傳時間
-            self.treeLend.delete(temp)
     
 
 window = Tk()
