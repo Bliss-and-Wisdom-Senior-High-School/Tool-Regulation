@@ -15,9 +15,8 @@ class GUI:
             'name': '',
             'date': '',
             'time': '',
-            'time': '',
             'tools': []
-            }
+        }
         self.notebook = ttk.Notebook(window)
         self.treeLendCount = -1
         # self.font = ttk.font('Arial', 16)
@@ -89,13 +88,14 @@ class GUI:
         
         #還資材 
         self.backFrm = Frame(self.notebook)
+        self.backFrm.pack(padx=50, pady=20)
         
         ##列表
         area1 = ('日期', '時間', '借用人', '資材', '數量')
         ac1 = ("date", "time", "name", "tool", "amount")
         data1 = f.getLend()
         
-        self.treeLend = ttk.Treeview(self.backFrm, columns=ac1, show='headings', height=15)
+        self.treeLend = ttk.Treeview(self.backFrm, columns=ac1, show='headings', height=20)
         vsb1 = ttk.Scrollbar(orient='vertical', command=self.treeLend.yview)
         self.treeLend.configure( yscrollcommand = vsb1.set)
         
@@ -111,7 +111,7 @@ class GUI:
             for j in i['tools'][1:]:
                 self.treeLend.insert('', 'end', values=['', '', '', j['tool'], j['amount']])
                 self.treeLendCount += 1
-        self.treeLend.grid(row=1, column=1, padx=50, pady=30)
+        self.treeLend.pack( side=TOP, padx=50, pady=30) 
 
         ##工具列
         backToolFrm = Frame(self.backFrm)
@@ -120,9 +120,8 @@ class GUI:
                          command= lambda: self.back())
         backBtn.grid(row=1, column=1, padx=20, pady=15)
         
-        backToolFrm.grid(row=2, column=1, pady=10)
-        
-        
+        backToolFrm.pack( pady=10)
+                
         #總資材 
         self.allFrm = Frame(self.notebook)
         tf1 = Frame(self.allFrm)
@@ -133,29 +132,32 @@ class GUI:
         self.inputNameLabel.grid(row=1, column=1, pady=5, padx=10)
         defaultName = StringVar()
         defaultName.set('')
-        self.inputNameAll = Entry(self.searchFrm, textvariable=defaultName, font=('Arial', 16), width=20)
-        self.inputNameAll.grid(row=1, column=2, pady=5, padx=10)
+        self.inputNameAll = ttk.Combobox(self.searchFrm, font=('Arial', 16), width=15,
+                                  height=8, values=[i for i in f.getAll()])
+        self.inputNameAll.grid(row=1, column=2, padx=10, pady=10)
         self.searchBtn = Button(self.searchFrm, font=('Arial', 16), text='搜尋', width=6,
                                 command=lambda: f.searchAll(self.inputNameAll.get()))
         self.searchBtn.grid(row=1, column=3, pady=5, padx=10)
         self.searchFrm.grid(row=1, column=1, padx=10, pady=10)
         
         ##列表
-        area = ('器材名稱', '器材數量', '損壞數量')
-        ac = ('name', 'amount', 'damaged')
+        area = ('器材名稱', '器材數量', '損壞數量', '外借中')
+        ac = ('name', 'amount', 'damaged', 'lending')
         data = f.getAll()
         
-        self.treeAll = ttk.Treeview(tf1, columns=ac, show='headings', height=12)
+        self.treeAll = ttk.Treeview(tf1, columns=ac, show='headings', height=18)
         vsb = ttk.Scrollbar(orient='vertical', command=self.treeAll.yview)
         self.treeAll.configure( yscrollcommand = vsb.set)
         
         for i in range(len(ac)):
             self.treeAll.column(ac[i], width=250, anchor='center')
-            self.treeAll.heading(ac[i], text=area[i]) 
+            self.treeAll.heading(ac[i], text=area[i])
         for i in data:
             li = [i]
             for j in data[i].values():
                 li.append(j)
+            if len(li)<len(ac):
+                li.append('0')
             self.treeAll.insert('', 'end', values=li)
         self.treeAll.grid(row=2, column=1, padx=50, pady=10)
         
@@ -215,21 +217,16 @@ class GUI:
         frm.pack(padx=20, pady=15)
     
     def addConfirm(self, w):
-        if self.nameIn.get() == "" or self.numIn.get() == "":
-            messagebox.showinfo("提醒", "請填寫完整的資料")
-        else:
-            self.inputTool.insert('end', self.nameIn.get())
-            f.addItem(w, self.treeAll, self.nameIn.get(), self.numIn.get()) 
+        # self.inputTool
+        f.addItem(w, self.treeAll, self.nameIn.get(), self.numIn.get()) 
     
     def removeItem(self):
-        ans = messagebox.askyesno("移除資材", "您確定要移除這項資材嗎？")
-        if ans == 1:
-            for i in self.treeAll.selection():
-                # print(self.treeAll.item(i, 'value')[0])
-                f.removeItem(self.treeAll.item(i, 'value')[0])
-                self.treeAll.delete(i)
-            return
-        
+        for i in self.treeAll.selection():
+            # print(self.treeAll.item(i, 'value')[0])
+            f.removeItem(self.treeAll.item(i, 'value')[0])
+            self.treeAll.delete(i)
+        return
+    
     def editItem(self):
         w = Toplevel()
         w.title('修改資材')
@@ -240,7 +237,8 @@ class GUI:
         nameLbl = Label(frm, text='選擇欲修改資材', font=('Arial', 16))
         nameLbl.grid(row=1, column=1, padx=10, pady=10)
         
-        self.liCom = ttk.Combobox(frm, font=('Arial', 16), width=15, values=[i for i in f.getAll()])
+        self.liCom = ttk.Combobox(frm, font=('Arial', 16), width=15,
+                                  height=8, values=[i for i in f.getAll()])
         self.liCom.grid(row=1, column=2, padx=10, pady=10)
         
         amountLbl = Label(frm, text='資材數量', font=('Arial', 16))
@@ -259,12 +257,20 @@ class GUI:
         damIn = Entry(frm, textvariable=self.dam, font=('Arial', 16), width=16)
         damIn.grid(row=3, column=2, padx=10, pady=10)
         
+        lend = Label(frm, text='外借數量', font=('Arial', 16))
+        lend.grid(row=4, column=1, padx=10, pady=10)
+        
+        self.lend = StringVar()
+        self.lend.set('0')
+        lendIn = Entry(frm, textvariable=self.lend, font=('Arial', 16), width=16)
+        lendIn.grid(row=4, column=2, padx=10, pady=10)
+        
         func = partial(self.callbackFunc)
         self.liCom.bind("<<ComboboxSelected>>", func)
         
         fr = Frame(w)
         okBtn = Button(fr, text='確認', font=('Arial', 16),
-                       command=lambda: f.editItem(w, self.treeAll, self.liCom.get(), self.amount.get(), damIn.get()))
+                       command=lambda: f.editItem(w, self.treeAll, self.liCom.get(), self.amount.get(), damIn.get(), self.lend.get()))
         okBtn.grid(row=1, column=1, padx=20, pady=15)
         
         cancelBtn = Button(fr, text='取消', font=('Arial', 14), command= w.destroy)
@@ -276,27 +282,31 @@ class GUI:
         
     def callbackFunc(self, event):
         name = self.liCom.get()
-        self.amount.set(f.getAll()[name]['amount'])
-        self.dam.set(f.getAll()[name]['dam'])
+        data = f.getAll()
+        self.amount.set(data[name]['amount'])
+        self.dam.set(data[name]['dam'])
+        if 'lend' not in data[name]:
+            data['name'] = '0'
+        self.lend.set(data[name]['lend'])
     
     def addToListbox(self, name, tool, amount):
-        # print(name, tool, amount)
+        print(name, tool, amount)
         if name == "" or tool == "" or amount == "":
-            messagebox.showinfo("提醒", "請輸入正確、完整的借用資料")
+            messagebox.showinfo("提醒", "請輸入完整的借用資料")
         else:
             try:
+                int(amount)
                 self.lendData['name'] = name
                 now = time.localtime()
                 self.lendData['date'] = str(now[0])+"/"+str(now[1])+"/"+str(now[2])
                 self.lendData['time'] = str(now[3])+":"+str(now[4])+":"+str(now[5])
-                tools = {"tool": tool, "amount": int(amount)}
+                tools = {"tool": tool, "amount": amount}
                 self.lendData['tools'].append(tools)
                 
-                self.showListbox.insert("end",  f'工具: {tool} 數量: {amount}')
+                self.showListbox.insert("end",  f' {tool} x {amount}')
             except ValueError as e:
-                messagebox.showinfo("提醒", "借用數量請輸入數字")
-                self.inputAmount.delete(0, END)
-            
+                messagebox.showinfo("提醒", "請輸入完整的借用資料")
+
     def deleteListbox(self):
         ans=0
         if self.showListbox.curselection() != ():
@@ -308,39 +318,35 @@ class GUI:
                 self.lendData['tools'].pop(i)
 
     def lend(self):
-        if self.showListbox.size() == 0:
-            messagebox.askyesno("提醒", "您沒有借用任何資材，是嗎？")
-        else:
-            ans = messagebox.askyesno("借用", "您確定要借出嗎？")
-            if ans == 1:
-                f.lendout(self.lendData)
-        
-                self.inputName.delete(0, END)
-                self.inputTool.delete(0, END)
-                self.inputAmount.delete(0, END)
-                self.showListbox.delete('0','end')
-                self.treeLend.insert('', 'end',
-                                     value=(self.lendData['date'], self.lendData['time'], self.lendData['name'],
-                                            self.lendData['tools'][0]['tool'], self.lendData['tools'][0]['amount']))
-                for i in self.lendData['tools'][1:]:
-                    self.treeLend.insert('', 'end', value=('', '', '', i['tool'], i['amount']))
+        ans = messagebox.askyesno("借用", "您確定要借出嗎？")
+        if ans == 1:
+            f.lendout(self.lendData)
+    
+            self.inputName.delete(0, END)
+            self.inputTool.delete(0, END)
+            self.inputAmount.delete(0, END)
+            self.showListbox.delete('0','end')
+            self.treeLend.insert('', 'end',
+                                 value=(self.lendData['date'], self.lendData['time'], self.lendData['name'],
+                                        self.lendData['tools'][0]['tool'], self.lendData['tools'][0]['amount']))
+            # self.treeAll
+            for i in self.lendData['tools'][1:]:
+                self.treeLend.insert('', 'end', value=('', '', '', i['tool'], i['amount']))
     
     def back(self):
-        ans = messagebox.askyesno("歸還", "您要歸還資材嗎？")
-        if ans == 1:
-            for i in self.treeLend.selection():
-                temp = i
-                print(self.treeLend.index(temp), self.treeLendCount)
-                while self.treeLend.index(temp) != self.treeLendCount and not self.treeLend.item(self.treeLend.next(temp), 'value')[0]:
-                    self.treeLend.delete(self.treeLend.next(temp))
-                while not self.treeLend.item(temp, 'value')[0]:
-                    t = self.treeLend.prev(temp)
-                    self.treeLend.delete(temp)
-                    temp = t
-                li = self.treeLend.item(temp, 'value')
-                f.giveBack(li[0], li[1]) #回傳時間
+        for i in self.treeLend.selection():
+            temp = i
+            print(self.treeLend.index(temp), self.treeLendCount)
+            while self.treeLend.index(temp) != self.treeLendCount and not self.treeLend.item(self.treeLend.next(temp), 'value')[0]:
+                self.treeLend.delete(self.treeLend.next(temp))
+            while not self.treeLend.item(temp, 'value')[0]:
+                t = self.treeLend.prev(temp)
                 self.treeLend.delete(temp)
-        
+                temp = t
+            li = self.treeLend.item(temp, 'value')
+            f.giveBack(li[0], li[1]) #回傳時間
+            self.treeLend.delete(temp)
+    
 
 window = Tk()
 GUI(window)
