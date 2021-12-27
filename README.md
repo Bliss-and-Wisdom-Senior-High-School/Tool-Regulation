@@ -1,3 +1,4 @@
 # Tool-Regulation
 ____
-想要借工具嗎？開始用吧！
+Do you want to borrow tools? 
+Let's go to use it!
