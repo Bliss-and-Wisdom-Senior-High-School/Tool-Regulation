@@ -1,34 +1,42 @@
 {
     "\u53c8\u6765\u4e86": {
         "amount": "7878",
-        "dam": "99"
-    },
-    "\u662f\u7684": {
-        "amount": "90",
-        "dam": "0"
+        "dam": "99",
+        "lending": "13"
     },
     "\u54c8\u55bd": {
         "amount": "672",
-        "dam": "0"
-    },
-    "\u9a6c\u4e0d\u5730": {
-        "amount": "531",
-        "dam": "0"
+        "dam": "0",
+        "lending": "43"
     },
     "\u942e\u5200": {
         "amount": "45",
-        "dam": "0"
+        "dam": "0",
+        "lending": "44"
     },
     "\u9aa8\u982d": {
         "amount": "99",
-        "dam": "0"
+        "dam": "0",
+        "lending": "0"
     },
     "\u9ebb\u5e03\u888b": {
         "amount": "100",
-        "dam": "0"
+        "dam": "0",
+        "lending": "3"
     },
     "\u624b\u6a5f": {
         "amount": "3",
-        "dam": "0"
+        "dam": "0",
+        "lending": "3"
+    },
+    "\u96fb\u8166": {
+        "amount": "46",
+        "dam": "0",
+        "lending": "17"
+    },
+    "\u6b63\u7d93\u7684\u8cc7\u6750": {
+        "amount": "100",
+        "dam": "0",
+        "lending": "3"
     }
 }

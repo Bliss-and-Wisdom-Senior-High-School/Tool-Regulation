@@ -36,7 +36,18 @@ def removeItem(name):
     fw = open("storage//savefile.txt", "w")
     fw.write(json.dumps(savefile, indent=4))
     
-
+def saveAll(data):
+    try:
+        f = open("storage//savefile.txt", "r")
+        json.loads(f.read())
+    except (FileNotFoundError, ValueError) as e:
+        print("File not exist or invalid JSON, recreating savefile.txt...")
+        print(e)
+        f = open("storage//savefile.txt", "w")
+        f.write("{}")
+    fw = open("storage//savefile.txt", "w")
+    fw.write(json.dumps(data, indent=4))
+    
 def readAll():
     try:
         f = open("storage//savefile.txt", "r")

@@ -1,7 +1,6 @@
 from tkinter import *
-# from tkinter.ttk import Notebook
-# from tkinter.ttk import Treeview
 from tkinter import ttk
+from tkinter import messagebox
 import function as f
 from functools import partial
 import time
@@ -33,6 +32,7 @@ class GUI:
         #視窗設定
         window.title('資材管理系統')
         window.resizable(1, 1)
+        # window.config(bg="")-----------------------------------------------------------------------------------------------------------
         # window.iconbitmap()
         
         #標題
@@ -52,9 +52,17 @@ class GUI:
         
         toolLabel = Label(lendTopFrm, text="工具", font=("Helvetica", 16, "bold"))
         self.inputTool = ttk.Combobox(lendTopFrm, height = 8, value=[i for i in f.getAll()])
+
+        fun = partial(self.lendRemain)
+        self.inputTool.bind("<<ComboboxSelected>>", fun)
         
         amountLabel = Label(lendTopFrm, text="數量", font=("Helvetica", 16, "bold"))
         self.inputAmount = Entry(lendTopFrm, width=20)
+        
+        self.remainNum = StringVar()
+        self.remainNum.set('')
+        remainLabel = Label(lendTopFrm, text="剩餘", font=('Helvetica', 16, 'bold'))
+        self.remainAmount = Label(lendTopFrm, textvariable=self.remainNum, font=('Helvetica', 16, 'bold'), width=5)
 
         self.showListbox = Listbox(self.lendFrm, selectmode=EXTENDED, height=10, width=50, font=("Helvetica", 15, "bold"))
         
@@ -81,6 +89,8 @@ class GUI:
         self.inputTool.pack(side=LEFT, pady=5, padx=10)
         amountLabel.pack(side=LEFT, pady=5)
         self.inputAmount.pack(side=LEFT, pady=5, padx=10)
+        remainLabel.pack(side=LEFT, pady=5, padx=10)
+        self.remainAmount.pack(side=LEFT, pady=5, padx=10)
         accurateButton.pack(side=LEFT, pady=5, ipadx=2, ipady=2)
         self.showListbox.pack( expand=YES, pady=10, padx=60)
         lendSouthFrm.pack(pady=20, padx=15)
@@ -141,8 +151,8 @@ class GUI:
         self.searchFrm.grid(row=1, column=1, padx=10, pady=10)
         
         ##列表
-        area = ('器材名稱', '器材數量', '損壞數量', '外借中')
-        ac = ('name', 'amount', 'damaged', 'lending')
+        area = ('器材名稱', '器材數量', '損壞數量', '外借中', '剩餘數量')
+        ac = ('name', 'amount', 'damaged', 'lending', 'remain')
         data = f.getAll()
         
         self.treeAll = ttk.Treeview(tf1, columns=ac, show='headings', height=18)
@@ -156,8 +166,9 @@ class GUI:
             li = [i]
             for j in data[i].values():
                 li.append(j)
-            if len(li)<len(ac):
-                li.append('0')
+            li.append(str(int(li[1]) - int(li[2]) - int(li[3])) )
+            # if len(li)<len(ac):
+            #     li.append('0')
             self.treeAll.insert('', 'end', values=li)
         self.treeAll.grid(row=2, column=1, padx=50, pady=10)
         
@@ -221,14 +232,23 @@ class GUI:
         if self.nameIn.get() == "" or self.numIn.get() == "":
             messagebox.showinfo("提醒", "請填寫完整的資料")
         else:
-            self.inputTool.insert('end', self.nameIn.get())
-            f.addItem(w, self.treeAll, self.nameIn.get(), self.numIn.get()) 
+            try:
+                if int(self.numIn.get())<=0:
+                    messagebox.showinfo("提醒", "請填寫完整的資料")
+                else:
+                    self.inputTool.delete('0', 'end')
+                    self.inputTool.insert('end', self.nameIn.get())
+                    f.addItem(w, self.treeAll, self.nameIn.get(), self.numIn.get()) 
+            except ValueError as e:
+                messagebox.showinfo("提醒", "請輸入正確、完整的借用資料")
+                self.inputAmount.delete(0, END)
+
     
     def removeItem(self):
 
         ans = messagebox.askyesno("移除資材", "您確定要移除這項資材嗎？")
         if ans == 1:
-            if self.treeAll.selection():
+            if not self.treeAll.selection():
                 messagebox.showinfo('提醒', '請先選取項目')
             else:
                 for i in self.treeAll.selection():
@@ -267,20 +287,21 @@ class GUI:
         damIn = Entry(frm, textvariable=self.dam, font=('Arial', 16), width=16)
         damIn.grid(row=3, column=2, padx=10, pady=10)
         
-        lend = Label(frm, text='外借數量', font=('Arial', 16))
-        lend.grid(row=4, column=1, padx=10, pady=10)
+        lendLbl = Label(frm, text='外借數量', font=('Arial', 16))
+        lendLbl.grid(row=4, column=1, padx=10, pady=10)
         
-        self.lend = StringVar()
-        self.lend.set('0')
-        lendIn = Entry(frm, textvariable=self.lend, font=('Arial', 16), width=16)
-        lendIn.grid(row=4, column=2, padx=10, pady=10)
+        self.lendTxt = StringVar()
+        self.lendTxt.set('0')
+        self.lendNum = Label(frm, textvariable=self.lendTxt, font=('Arial', 16), width=16)
+        self.lendNum.grid(row=4, column=2, padx=10, pady=10)
         
         func = partial(self.callbackFunc)
         self.liCom.bind("<<ComboboxSelected>>", func)
         
         fr = Frame(w)
         okBtn = Button(fr, text='確認', font=('Arial', 16),
-                       command=lambda: f.editItem(w, self.treeAll, self.liCom.get(), self.amount.get(), damIn.get(), self.lend.get()))
+                       command=lambda: f.editItem(w, self.treeAll, self.liCom.get(),
+                                                  self.amount.get(), damIn.get(), self.lendTxt.get()))
         okBtn.grid(row=1, column=1, padx=20, pady=15)
         
         cancelBtn = Button(fr, text='取消', font=('Arial', 14), command= w.destroy)
@@ -295,25 +316,31 @@ class GUI:
         data = f.getAll()
         self.amount.set(data[name]['amount'])
         self.dam.set(data[name]['dam'])
-        if 'lend' not in data[name]:
+        if 'lending' not in data[name]:
             data['name'] = '0'
-        self.lend.set(data[name]['lend'])
+        self.lendTxt.set(data[name]['lending'])
+    
+    def lendRemain(self, event):
+        item = f.getItem(self.inputTool.get())
+        remain = str(int(item['amount']) - int(item['dam']) - int(item['lending']))
+        self.remainNum.set(remain)
     
     def addToListbox(self, name, tool, amount):
-        print(name, tool, amount)
+        print(name, tool, amount, 'add to list box')
         if name == "" or tool == "" or amount == "":
             messagebox.showinfo("提醒", "請輸入正確、完整的借用資料")
+        elif tool not in f.getAll():
+            messagebox.showinfo('提醒', '請輸入正確、完整的借用資料')
         else:
             try:
-                int(amount)
-                self.lendData['name'] = name
-                now = time.localtime()
-                self.lendData['date'] = str(now[0])+"/"+str(now[1])+"/"+str(now[2])
-                self.lendData['time'] = str(now[3])+":"+str(now[4])+":"+str(now[5])
-                tools = {"tool": tool, "amount": amount}
-                self.lendData['tools'].append(tools)
-                
-                self.showListbox.insert("end",  f' {tool} x {amount}')
+                if int(amount) + int(f.getItem(tool)['lending']) > int(f.getItem(tool)['amount']):
+                    messagebox.showinfo("提醒", "數量超過現有數量")
+                else:
+                    f.editAmount(self.treeAll, tool, int(amount))
+                    tools = {"tool": tool, "amount": amount}
+                    self.lendData['tools'].append(tools)
+                    
+                    self.showListbox.insert("end",  f' {tool} x {amount}')
             except ValueError as e:
                 messagebox.showinfo("提醒", "請輸入正確、完整的借用資料")
                 self.inputAmount.delete(0, END)
@@ -326,26 +353,38 @@ class GUI:
             index = self.showListbox.curselection()
             for i in reversed(index):
                 self.showListbox.delete(i)
+                f.editAmount(self.treeAll, self.lendData['tools'][i]['tool'], -int(self.lendData['tools'][i]['amount']))
                 self.lendData['tools'].pop(i)
 
     def lend(self):
         if self.showListbox.size() == 0:
             messagebox.askyesno("提醒", "您沒有借用任何資材，是嗎？")
+        elif not self.inputName.get():
+            messagebox.showinfo('提醒', '請先輸入借用人性名!')
         else:
             ans = messagebox.askyesno("借用", "您確定要借出嗎？")
             if ans == 1:
                 f.lendout(self.lendData)
-        
-                self.inputName.delete(0, END)
-                self.inputTool.delete(0, END)
-                self.inputAmount.delete(0, END)
-                self.showListbox.delete('0','end')
+                
+                self.lendData['name'] = self.inputName.get()
+                now = time.localtime()
+                self.lendData['date'] = f'{now[0]:2d}/{now[1]:2d}/{now[2]:2d}'
+                self.lendData['time'] = f'{now[3]:2d}/{now[4]:2d}/{now[5]:2d}'
                 self.treeLend.insert('', 'end',
                                      value=(self.lendData['date'], self.lendData['time'], self.lendData['name'],
                                             self.lendData['tools'][0]['tool'], self.lendData['tools'][0]['amount']))
                 # self.treeAll
+                self.treeLendCount += 1
                 for i in self.lendData['tools'][1:]:
                     self.treeLend.insert('', 'end', value=('', '', '', i['tool'], i['amount']))
+                    self.treeLendCount += 1
+                
+                self.lendData['tools'] = []
+                self.inputName.delete(0, END)
+                self.inputTool.delete(0, END)
+                self.inputAmount.delete(0, END)
+                self.showListbox.delete('0','end')
+                self.remainNum.set('')
     
     def back(self):
         ans = messagebox.askyesno("歸還", "您要歸還資材嗎？")
@@ -354,15 +393,21 @@ class GUI:
                 temp = i
                 print(self.treeLend.index(temp), self.treeLendCount)
                 while self.treeLend.index(temp) != self.treeLendCount and not self.treeLend.item(self.treeLend.next(temp), 'value')[0]:
-                    self.treeLend.delete(self.treeLend.next(temp))
+                    self.delete(self.treeLend.next(temp))
                 while not self.treeLend.item(temp, 'value')[0]:
                     t = self.treeLend.prev(temp)
-                    self.treeLend.delete(temp)
+                    self.delete(temp)
                     temp = t
                 li = self.treeLend.item(temp, 'value')
                 f.giveBack(li[0], li[1]) #回傳時間
-                self.treeLend.delete(temp)
+                self.delete(temp)
     
+    def delete(self, item):
+        li = self.treeLend.item(item, 'value')
+        print('li', li)
+        self.treeLend.delete(item)
+        self.treeLendCount -= 1
+        f.editAmount(self.treeAll, li[3], -int(li[4]))
 
 window = Tk()
 GUI(window)
